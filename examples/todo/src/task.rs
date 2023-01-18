@@ -33,7 +33,7 @@ pub struct Todo {
 impl Task {
     pub async fn all(conn: &DbConn) -> QueryResult<Vec<Task>> {
         conn.run(|c| {
-            tasks::table.order(tasks::id.desc()).load::<Task>(c)
+            tasks::table.order(tasks::id.desc()).load::<Task>(&mut c.0)
         }).await
     }
 
@@ -41,17 +41,17 @@ impl Task {
     pub async fn insert(todo: Todo, conn: &DbConn) -> QueryResult<usize> {
         conn.run(|c| {
             let t = Task { id: None, description: todo.description, completed: false };
-            diesel::insert_into(tasks::table).values(&t).execute(c)
+            diesel::insert_into(tasks::table).values(&t).execute(&mut c.0)
         }).await
     }
 
     /// Returns the number of affected rows: 1.
     pub async fn toggle_with_id(id: i32, conn: &DbConn) -> QueryResult<usize> {
         conn.run(move |c| {
-            let task = tasks::table.filter(tasks::id.eq(id)).get_result::<Task>(c)?;
+            let task = tasks::table.filter(tasks::id.eq(id)).get_result::<Task>(&mut c.0)?;
             let new_status = !task.completed;
             let updated_task = diesel::update(tasks::table.filter(tasks::id.eq(id)));
-            updated_task.set(tasks::completed.eq(new_status)).execute(c)
+            updated_task.set(tasks::completed.eq(new_status)).execute(&mut c.0)
         }).await
     }
 
@@ -59,13 +59,13 @@ impl Task {
     pub async fn delete_with_id(id: i32, conn: &DbConn) -> QueryResult<usize> {
         conn.run(move |c| diesel::delete(tasks::table)
             .filter(tasks::id.eq(id))
-            .execute(c))
+            .execute(&mut c.0))
             .await
     }
 
     /// Returns the number of affected rows.
     #[cfg(test)]
     pub async fn delete_all(conn: &DbConn) -> QueryResult<usize> {
-        conn.run(|c| diesel::delete(tasks::table).execute(c)).await
+        conn.run(|c| diesel::delete(tasks::table).execute(&mut c.0)).await
     }
 }

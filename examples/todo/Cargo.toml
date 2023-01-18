@@ -9,6 +9,7 @@ publish = false
 rocket = { path = "../../core/lib" }
 diesel = { version = "2.0.0", features = ["sqlite", "r2d2"] }
 diesel_migrations = "2.0.0"
+libsqlite3-sys = { version = "0.24.2", features = [ "bundled-sqlcipher" ] }
 
 [dev-dependencies]
 parking_lot = "0.12"
